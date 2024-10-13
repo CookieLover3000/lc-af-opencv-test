@@ -27,11 +27,12 @@ def capture_video_stream():
         # Toon het frame in een venster
         cv2.imshow("Video Stream", frame)
 
-        i = i + 1
-        if(i > 30):
-            print(f'Sobel: \t\t{calculateSharpnessSobel(frame)}')
-            print(f'Robert Cross: \t{calculateSharpnessRoberts(frame)}\n')
-            i = 0
+        # i = i + 1
+        # if(i > 30):
+        print(f'Sobel: \t\t{calculateSharpnessSobel(frame, 200)}')
+        print(f'Robert Cross: \t{calculateSharpnessRoberts(frame, 200)}')
+        print(f'laplace: \t{calculateSharpnessLaplace(frame, 200)}\n')
+            # i = 0
         #os.system('cls')
 
         # Wacht 1 ms voor een toetsdruk, en stop als de gebruiker op 'q' drukt
@@ -98,27 +99,66 @@ def captureImage2():
     cap.release()
     cv2.destroyAllWindows()
 
+def calculateSharpnessSobel(image, centerSize):
+    # Calculate the size of the center that is used to apply the filter to
+    # if centerSize = 100 then an area of 100x100 pixels is used to apply the filter.
+    centerSize = centerSize // 2
+    # Get the dimensions of the image
+    height, width = image.shape[:2]
 
-def calculateSharpnessSobel(image):
-    # Converteer de afbeelding naar grijswaarden
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    # Calculate the coordinates for the center of the image
+    centerX, centerY = width // 2, height // 2
 
-    # Bereken de gradiënten in de x- en y-richting
-    gradX = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)  # Sobel in de x-richting
-    gradY = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)  # Sobel in de y-richting
+    # Define the top-left corner of the 100x100 region
+    startX = max(centerX - centerSize, 0)
+    startY = max(centerY - centerSize, 0)
 
-    # Bereken de magnitude van de gradiënt
+    # Define the bottom-right corner of the 100x100 region
+    endX = min(centerX + centerSize, width)
+    endY = min(centerY + centerSize, height)
+
+    # Crop the image to the 100x100 region
+    croppedImage = image[startY:endY, startX:endX]
+
+    # Convert the cropped image to grayscale
+    gray = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
+
+    # Calculate the gradients in the x and y directions
+    gradX = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=3)  # Sobel in the x direction
+    gradY = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=3)  # Sobel in the y direction
+
+    # Calculate the magnitude of the gradient
     gradMagnitude = cv2.magnitude(gradX, gradY)
 
-    # Bereken de standaardafwijking van de gradiënt magnitude (maat voor scherpte)
+    # Calculate the standard deviation of the gradient magnitude (measure of sharpness)
     mean, stddev = cv2.meanStdDev(gradMagnitude)
-    sharpness = stddev[0][0] ** 2  # Variantie als maat voor scherpte
+    sharpness = stddev[0][0] ** 2  # Variance as a measure of sharpness
 
     return sharpness
 
-def calculateSharpnessLaplace(image):
+def calculateSharpnessLaplace(image, centerSize):
+    # Calculate the size of the center that is used to apply the filter to
+    # if centerSize = 100 then an area of 100x100 pixels is used to apply the filter.
+    centerSize = centerSize // 2
+    # Get the dimensions of the image
+    height, width = image.shape[:2]
+
+    # Calculate the coordinates for the center of the image
+    centerX, centerY = width // 2, height // 2
+
+    # Define the top-left corner of the 100x100 region
+    startX = max(centerX - centerSize, 0)
+    startY = max(centerY - centerSize, 0)
+
+    # Define the bottom-right corner of the 100x100 region
+    endX = min(centerX + centerSize, width)
+    endY = min(centerY + centerSize, height)
+
+    # Crop the image to the 100x100 region
+    croppedImage = image[startY:endY, startX:endX]
+
     # Converteer de afbeelding naar grijswaarden
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
 
     # Pas de Laplacian filter toe om randen te detecteren
     laplace = cv2.Laplacian(gray, cv2.CV_64F)
@@ -129,24 +169,44 @@ def calculateSharpnessLaplace(image):
 
     return sharpness
 
-def calculateSharpnessRoberts(image):
-    # Converteer de afbeelding naar grijswaarden
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+def calculateSharpnessRoberts(image, centerSize):
+    # Calculate the size of the center that is used to apply the filter to
+    # if centerSize = 100 then an area of 100x100 pixels is used to apply the filter.
+    centerSize = centerSize // 2
+    # Get the dimensions of the image
+    height, width = image.shape[:2]
 
-    # Definieer Roberts Cross kernels
+    # Calculate the coordinates for the center of the image
+    centerX, centerY = width // 2, height // 2
+
+    # Define the top-left corner of the 100x100 region
+    startX = max(centerX - centerSize, 0)
+    startY = max(centerY - centerSize, 0)
+
+    # Define the bottom-right corner of the 100x100 region
+    endX = min(centerX + centerSize, width)
+    endY = min(centerY + centerSize, height)
+
+    # Crop the image to the 100x100 region
+    croppedImage = image[startY:endY, startX:endX]
+
+    # Convert the cropped image to grayscale
+    gray = cv2.cvtColor(croppedImage, cv2.COLOR_BGR2GRAY)
+
+    # Define Roberts Cross kernels
     kernelX = np.array([[1, 0], [0, -1]], dtype=np.float64)
     kernelY = np.array([[0, 1], [-1, 0]], dtype=np.float64)
 
-    # Pas de kernels toe om de gradiënt in de x- en y-richting te berekenen
+    # Apply the kernels to compute the gradient in the x and y directions
     gradX = cv2.filter2D(gray, cv2.CV_64F, kernelX)
     gradY = cv2.filter2D(gray, cv2.CV_64F, kernelY)
 
-    # Bereken de magnitude van de gradiënt
+    # Compute the magnitude of the gradient
     gradMagnitude = cv2.magnitude(gradX, gradY)
 
-    # Bereken de standaardafwijking van de gradiënt magnitude (maat voor scherpte)
+    # Compute the standard deviation of the gradient magnitude (measure of sharpness)
     mean, stddev = cv2.meanStdDev(gradMagnitude)
-    sharpness = stddev[0][0] ** 2  # Variantie als maat voor scherpte
+    sharpness = stddev[0][0] ** 2  # Variance as a measure of sharpness
 
     return sharpness
 
