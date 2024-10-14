@@ -6,7 +6,7 @@ import os
 
 def capture_video_stream():
     # Open the camera, index = 0 for default webcam.
-    cap = cv2.VideoCapture(0)
+    cap = cv2.VideoCapture(2)
 
     # Check if the camera can be opened
     if not cap.isOpened():
@@ -24,10 +24,13 @@ def capture_video_stream():
 
         # Display the frame
         cv2.imshow("Video Stream", frame)
+        sobel, sobelDuration = calculateSharpnessSobel(frame, 200)
+        roberts, robertsDuration = calculateSharpnessRoberts(frame, 200)
+        laplace, laplaceDuration = calculateSharpnessLaplace(frame, 200)
 
-        print(f'Sobel: \t\t{calculateSharpnessSobel(frame, 200)}')
-        print(f'Robert Cross: \t{calculateSharpnessRoberts(frame, 200)}')
-        print(f'laplace: \t{calculateSharpnessLaplace(frame, 200)}\n')
+        print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
+        print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
+        print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
 
 
         # Wait 1 ms for a keypress, stop if the user presses 'q'
@@ -39,7 +42,7 @@ def capture_video_stream():
     cv2.destroyAllWindows()
 
 def calculateSharpnessSobel(frame, centerSize):
-
+    startTime = time.time()
     croppedFrame = resizeFrame(frame, centerSize)
 
     # Convert the cropped image to grayscale
@@ -55,10 +58,11 @@ def calculateSharpnessSobel(frame, centerSize):
     # Calculate the standard deviation of the gradient magnitude (measure of sharpness)
     mean, stddev = cv2.meanStdDev(gradMagnitude)
     sharpness = stddev[0][0] ** 2  # Variance as a measure of sharpness
-
-    return sharpness
+    endTime = time.time()
+    return sharpness, (endTime - startTime)
 
 def calculateSharpnessLaplace(frame, centerSize):
+    startTime = time.time()
     # Crop the frame to the 100x100 region
     croppedFrame = resizeFrame(frame, centerSize)
 
@@ -71,10 +75,12 @@ def calculateSharpnessLaplace(frame, centerSize):
     # Calculate the standard deviation of the Laplace output (measure of sharpness)
     mean, stddev = cv2.meanStdDev(laplace)
     sharpness = stddev[0][0] ** 2  # Variance as a measure of sharpness
+    endTime = time.time()
 
-    return sharpness
+    return sharpness, (endTime - startTime)
 
 def calculateSharpnessRoberts(frame, centerSize):
+    startTime = time.time()
     # Crop the image to the 100x100 region
     croppedFrame = resizeFrame(frame, centerSize)
 
@@ -95,8 +101,8 @@ def calculateSharpnessRoberts(frame, centerSize):
     # Compute the standard deviation of the gradient magnitude (measure of sharpness)
     mean, stddev = cv2.meanStdDev(gradMagnitude)
     sharpness = stddev[0][0] ** 2  # Variance as a measure of sharpness
-
-    return sharpness
+    endTime = time.time()
+    return sharpness, (endTime - startTime)
 
 def resizeFrame(frame, frameSize):
     # Calculate the size of the center that is used to apply the filter to
