@@ -12,6 +12,10 @@ def capture_video_stream():
     if not cap.isOpened():
         print("Cannot open Camera")
         return
+    
+    # Temperare focus value and sweep counter
+    newFocus = 0
+    sweep = 0
 
     while True:
         # Read a frame from the camera
@@ -31,7 +35,20 @@ def capture_video_stream():
         print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
         print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
         print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
+        print(f'focus value: \t{newFocus}\n')
 
+
+        # Check after a certain amounts of sweeping the value of an algorithm and increase/decrease lens position based on that value
+        # sweep += 1
+        
+        # if roberts < 10 and newFocus >= -5 and sweep > 10:
+        #     newFocus -= 1
+
+        # if  roberts > 13 and newFocus < 5 and sweep > 10:
+        #     newFocus += 1
+
+        # Use one of the algorithm sharpness value to change lens position
+        # adjustCameraFocus(newFocus)
 
         # Wait 1 ms for a keypress, stop if the user presses 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -103,6 +120,19 @@ def calculateSharpnessRoberts(frame, centerSize):
     sharpness = stddev[0][0] ** 2  # Variance as a measure of sharpness
     endTime = time.time()
     return sharpness, (endTime - startTime)
+
+
+
+def adjustCameraFocus(newFocus):
+    # Adjust focus using v4l2-ctl, assuming focus control is available
+    os.system(f"v4l2-ctl -c focus_absolute={newFocus}")
+        
+    # Allow time for adjustment
+    # time.sleep(0.1)
+
+    return newFocus
+
+
 
 def resizeFrame(frame, frameSize):
     # Calculate the size of the center that is used to apply the filter to
