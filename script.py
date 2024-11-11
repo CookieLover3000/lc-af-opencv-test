@@ -14,7 +14,6 @@ def capture_video_stream():
         return
     
     # Temperare focus value and sweep counter
-    newFocus = 0
     sweep = 0
     tdict = {}
     sweepDone = False
@@ -136,18 +135,12 @@ def calculateSharpnessRoberts(frame, centerSize):
     endTime = time.time()
     return sharpness, (endTime - startTime)
 
-# def sweepAlgorithm(scherpteAlgo, dict):
-#     return positie = dict(hoogste)
-
-
 def adjustCameraFocus(newFocus):
     # Adjust focus using v4l2-ctl, assuming focus control is available
-    os.system(f"v4l2-ctl -c focus_absolute={newFocus}")
-        
+    os.system(f"v4l2-ctl -c focus_absolute={newFocus}")   
+    
     # Allow time for adjustment
     # time.sleep(0.01)
-
-
 
 def resizeFrame(frame, frameSize):
     # Calculate the size of the center that is used to apply the filter to
