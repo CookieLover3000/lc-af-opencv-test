@@ -6,7 +6,7 @@ import os
 
 def capture_video_stream():
     # Open the camera, index = 0 for default webcam.
-    cap = cv2.VideoCapture(5)
+    cap = cv2.VideoCapture(0)
 
     # Check if the camera can be opened
     if not cap.isOpened():
@@ -16,21 +16,27 @@ def capture_video_stream():
     # Temperare focus value and sweep counter
     newFocus = 0
     sweep = 0
-    tdict
+    tdict = {}
     hoogsteScherpte = 0
+    sweepDone = False
 
-    for sweep in range(255):
-        frame = cap.read()
-        roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
-        tdict = {roberts : sweep}
-        adjustCameraFocus(sweep)
+    # for sweep in range(255):
+    #     ret, frame = cap.read()
+    #     # Check if the frame was read correctly
+    #     if not ret:
+    #         print("Cannot read frame correctly, End of stream?")
+    #         break
+    #     cv2.imshow("Video Stream", frame)
+    #     roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
+    #     tdict = {roberts : sweep}
+    #     adjustCameraFocus(sweep)
 
 
-    for scherpte in tdict:
-        if scherpte > hoogsteScherpte:
-            hoogsteScherpte = scherpte
+    # for scherpte in tdict:
+    #     if scherpte > hoogsteScherpte:
+    #         hoogsteScherpte = scherpte
 
-    adjustCameraFocus(tdict(hoogsteScherpte))
+    # adjustCameraFocus(tdict[hoogsteScherpte])
 
     while True:
         # Read a frame from the camera
@@ -43,19 +49,34 @@ def capture_video_stream():
 
         # Display the frame
         cv2.imshow("Video Stream", frame)
-        sobel, sobelDuration = calculateSharpnessSobel(frame, 300)
+        # sobel, sobelDuration = calculateSharpnessSobel(frame, 300)
         roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
-        laplace, laplaceDuration = calculateSharpnessLaplace(frame, 300)
+        # laplace, laplaceDuration = calculateSharpnessLaplace(frame, 300)
 
-        print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
-        print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
-        print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
-        print(f'focus value: \t{newFocus}\n')
+        # print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
+        # print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
+        # print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
+        # print(f'focus value: \t{newFocus}\n')
 
-        # adjustCameraFocus(newFocus)
+
+        if sweep <= 255:
+            # tdict = {int(roberts) : sweep}
+            tdict[sweep] = int(roberts * 100)
+            print(f'sweep: {sweep}\t\t sharpness: {roberts}')
+            adjustCameraFocus(sweep)
+            sweep += 1
+        elif sweep > 255 and sweepDone == False:
+            for scherpte in tdict.values():
+                print(f'sweep: {sweep}\t\t sharpness: {roberts}')
+                if scherpte > hoogsteScherpte:
+                    hoogsteScherpte = scherpte
+            for key, value in tdict.items():
+                if value == hoogsteScherpte:
+                    adjustCameraFocus(key)
+            sweepDone = True
 
         # Wait 1 ms for a scherptepress, stop if the user presses 'q'
-        if cv2.waitscherpte(1) & 0xFF == ord('q'):
+        if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
     # Close the camera and windows because we're done.
@@ -134,7 +155,7 @@ def adjustCameraFocus(newFocus):
     os.system(f"v4l2-ctl -c focus_absolute={newFocus}")
         
     # Allow time for adjustment
-    time.sleep(0.01)
+    # time.sleep(0.01)
 
 
 
