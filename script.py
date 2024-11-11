@@ -6,7 +6,12 @@ import os
 
 def capture_video_stream():
     # Open the camera, index = 0 for default webcam.
-    cap = cv2.VideoCapture(0)
+
+    try:
+        user_input = int(input("Please enter an integer: "))
+    except ValueError:
+        print("That's not a valid integer!")
+    cap = cv2.VideoCapture(user_input)
 
     # Check if the camera can be opened
     if not cap.isOpened():
