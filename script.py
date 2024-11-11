@@ -8,7 +8,7 @@ def capture_video_stream():
     # Open the camera, index = 0 for default webcam.
 
     try:
-        user_input = int(input("Please enter an integer: "))
+        user_input = int(input("Please enter the camera index value: "))
     except ValueError:
         print("That's not a valid integer!")
     cap = cv2.VideoCapture(user_input)
@@ -143,7 +143,7 @@ def calculateSharpnessRoberts(frame, centerSize):
 def adjustCameraFocus(newFocus):
     # Adjust focus using v4l2-ctl, assuming focus control is available
     os.system(f"v4l2-ctl -c focus_absolute={newFocus}")   
-    
+
     # Allow time for adjustment
     # time.sleep(0.01)
 
