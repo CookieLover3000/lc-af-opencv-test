@@ -57,23 +57,8 @@ def capture_video_stream():
         # print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
         # print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
         # print(f'focus value: \t{newFocus}\n')
-
-
-        if sweep <= 255:
-            # tdict = {int(roberts) : sweep}
-            tdict[sweep] = int(roberts * 100)
-            print(f'sweep: {sweep}\t\t sharpness: {roberts}')
-            adjustCameraFocus(sweep)
-            sweep += 1
-        elif sweep > 255 and sweepDone == False:
-            for scherpte in tdict.values():
-                print(f'sweep: {sweep}\t\t sharpness: {roberts}')
-                if scherpte > hoogsteScherpte:
-                    hoogsteScherpte = scherpte
-            for key, value in tdict.items():
-                if value == hoogsteScherpte:
-                    adjustCameraFocus(key)
-            sweepDone = True
+        if not sweepDone:
+            sweepDone = sweepAlgorithm(sweep, tdict, roberts)
 
         # Wait 1 ms for a scherptepress, stop if the user presses 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -82,6 +67,24 @@ def capture_video_stream():
     # Close the camera and windows because we're done.
     cap.release()
     cv2.destroyAllWindows()
+
+def sweepAlgorithm(sweep, tdict, algorithm):
+    if sweep <= 255:
+        tdict[sweep] = int(algorithm * 100)
+        print(f'sweep: {sweep}\t\t sharpness: {algorithm}')
+        adjustCameraFocus(sweep)
+        sweep += 1
+        return False
+    elif sweep > 255:
+        hoogsteScherpte = 100
+        for scherpte in tdict.values():
+            print(f'sweep: {sweep}\t\t sharpness: {algorithm}')
+            if scherpte > hoogsteScherpte:
+                hoogsteScherpte = scherpte
+        for key, value in tdict.items():
+            if value == hoogsteScherpte:
+                adjustCameraFocus(key)
+        return True
 
 def calculateSharpnessSobel(frame, centerSize):
     startTime = time.time()
