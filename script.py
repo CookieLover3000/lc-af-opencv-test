@@ -17,7 +17,6 @@ def capture_video_stream():
     newFocus = 0
     sweep = 0
     tdict = {}
-    hoogsteScherpte = 0
     sweepDone = False
 
     while True:
@@ -51,12 +50,18 @@ def capture_video_stream():
     cv2.destroyAllWindows()
 
 def sweepAlgorithm(sweep, tdict, algorithm):
+    # Loop through the focus values
     if sweep <= 255:
+        # Insert the sharpnessvalue given by the current focus value
         tdict[sweep] = int(algorithm * 100)
         print(f'sweep: {sweep}\t\t sharpness: {algorithm}')
         adjustCameraFocus(sweep)
         sweep += 1
+        # Not done so return
         return False, sweep
+    
+    # If the sweep has been completed, pick the highest sharpness value 
+    # and the corresponing focus value
     elif sweep > 255:
         hoogsteScherpte = 100
         for scherpte in tdict.values():
