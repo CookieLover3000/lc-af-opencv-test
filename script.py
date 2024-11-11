@@ -6,7 +6,7 @@ import os
 
 def capture_video_stream():
     # Open the camera, index = 0 for default webcam.
-    cap = cv2.VideoCapture(2)
+    cap = cv2.VideoCapture(5)
 
     # Check if the camera can be opened
     if not cap.isOpened():
@@ -16,6 +16,21 @@ def capture_video_stream():
     # Temperare focus value and sweep counter
     newFocus = 0
     sweep = 0
+    tdict
+    hoogsteScherpte = 0
+
+    for sweep in range(255):
+        frame = cap.read()
+        roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
+        tdict = {roberts : sweep}
+        adjustCameraFocus(sweep)
+
+
+    for scherpte in tdict:
+        if scherpte > hoogsteScherpte:
+            hoogsteScherpte = scherpte
+
+    adjustCameraFocus(tdict(hoogsteScherpte))
 
     while True:
         # Read a frame from the camera
@@ -28,30 +43,19 @@ def capture_video_stream():
 
         # Display the frame
         cv2.imshow("Video Stream", frame)
-        sobel, sobelDuration = calculateSharpnessSobel(frame, 200)
-        roberts, robertsDuration = calculateSharpnessRoberts(frame, 200)
-        laplace, laplaceDuration = calculateSharpnessLaplace(frame, 200)
+        sobel, sobelDuration = calculateSharpnessSobel(frame, 300)
+        roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
+        laplace, laplaceDuration = calculateSharpnessLaplace(frame, 300)
 
         print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
         print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
         print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
         print(f'focus value: \t{newFocus}\n')
 
-
-        # Check after a certain amounts of sweeping the value of an algorithm and increase/decrease lens position based on that value
-        # sweep += 1
-        
-        # if roberts < 10 and newFocus >= -5 and sweep > 10:
-        #     newFocus -= 1
-
-        # if  roberts > 13 and newFocus < 5 and sweep > 10:
-        #     newFocus += 1
-
-        # Use one of the algorithm sharpness value to change lens position
         # adjustCameraFocus(newFocus)
 
-        # Wait 1 ms for a keypress, stop if the user presses 'q'
-        if cv2.waitKey(1) & 0xFF == ord('q'):
+        # Wait 1 ms for a scherptepress, stop if the user presses 'q'
+        if cv2.waitscherpte(1) & 0xFF == ord('q'):
             break
 
     # Close the camera and windows because we're done.
@@ -121,6 +125,8 @@ def calculateSharpnessRoberts(frame, centerSize):
     endTime = time.time()
     return sharpness, (endTime - startTime)
 
+# def sweepAlgorithm(scherpteAlgo, dict):
+#     return positie = dict(hoogste)
 
 
 def adjustCameraFocus(newFocus):
@@ -128,9 +134,7 @@ def adjustCameraFocus(newFocus):
     os.system(f"v4l2-ctl -c focus_absolute={newFocus}")
         
     # Allow time for adjustment
-    # time.sleep(0.1)
-
-    return newFocus
+    time.sleep(0.01)
 
 
 
