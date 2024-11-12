@@ -4,13 +4,14 @@ import numpy as np
 import time
 import os
 
-def capture_video_stream():
-    # Open the camera, index = 0 for default webcam.
+startTimer = 0
 
+def capture_video_stream():
     try:
         user_input = int(input("Please enter the camera index value: "))
     except ValueError:
         print("That's not a valid integer!")
+    # Open the camera, index = 0 for default webcam.
     cap = cv2.VideoCapture(user_input)
 
     # Check if the camera can be opened
@@ -18,9 +19,13 @@ def capture_video_stream():
         print("Cannot open Camera")
         return
     
-    # Temperare focus value and sweep counter
-    sweep = 0
-    tdict = {}
+    # Temporary focus value and sweep counter
+    lensPosition = 0
+    sharpnessNumber = 0
+    global startTimer
+    
+    sweepDictionary = {}
+    hillDictionary = {}
     sweepDone = False
 
     while True:
@@ -35,17 +40,16 @@ def capture_video_stream():
         # Display the frame
         cv2.imshow("Video Stream", frame)
         # sobel, sobelDuration = calculateSharpnessSobel(frame, 300)
-        roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
-        # laplace, laplaceDuration = calculateSharpnessLaplace(frame, 300)
+        # roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
+        laplace, laplaceDuration  = calculateSharpnessLaplace(frame, 300)
 
-        # print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
-        # print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
-        # print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
-        # print(f'focus value: \t{newFocus}\n')
         if not sweepDone:
-            sweepDone, sweep = sweepAlgorithm(sweep, tdict, roberts)
+            sweepDone, lensPosition, sharpnessNumber = sweepAlgorithm(lensPosition, sweepDictionary, laplace)
+        elif int(laplace * 100) < sharpnessNumber - 60000 and time.time() - startTimer > 5:
+            # hillClimb(lensPosition, frame, laplace, hillDictionary)
+            print(f'laplace: {int(laplace * 100)}')
 
-        # Wait 1 ms for a scherptepress, stop if the user presses 'q'
+        # Wait 1 ms for a keypress, stop if the user presses 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
 
@@ -53,29 +57,54 @@ def capture_video_stream():
     cap.release()
     cv2.destroyAllWindows()
 
+def hillClimb(lensPosition, frame, algorithm, dictionary):
+    sharpnessValue = int(algorithm * 100)
+    dictionary[lensPosition] = int(sharpnessValue * 100)
+    print(f'algorithm: {algorithm}')
+    print(f'lensposition: {lensPosition}')
+
+    if dictionary[lensPosition - 10] < sharpnessValue:
+        adjustCameraFocus(lensPosition + 10)
+    elif dictionary[lensPosition + 10] < sharpnessValue:
+        adjustCameraFocus(lensPosition - 10)
+    time.sleep(0.1)
+    
+
 def sweepAlgorithm(sweep, tdict, algorithm):
     # Loop through the focus values
     if sweep <= 255:
         # Insert the sharpnessvalue given by the current focus value
         tdict[sweep] = int(algorithm * 100)
         print(f'sweep: {sweep}\t\t sharpness: {algorithm}')
-        adjustCameraFocus(sweep)
+        adjustCameraFocus(sweep, 0)
         sweep += 1
         # Not done so return
-        return False, sweep
+        return False, sweep, 0
     
     # If the sweep has been completed, pick the highest sharpness value 
     # and the corresponing focus value
     elif sweep > 255:
-        hoogsteScherpte = 100
+        hoogsteScherpte = 0
+        lensPos = 0
+        global startTimer
         for scherpte in tdict.values():
-            print(f'sweep: {sweep}\t\t sharpness: {algorithm}')
             if scherpte > hoogsteScherpte:
                 hoogsteScherpte = scherpte
         for key, value in tdict.items():
             if value == hoogsteScherpte:
-                adjustCameraFocus(key)
-        return True, sweep
+                lensPos = key
+                adjustCameraFocus(key, 0)
+                startTimer = time.time()
+                print(f'hoogste Scherpte: {hoogsteScherpte}')
+                break
+        return True, lensPos, hoogsteScherpte
+
+def adjustCameraFocus(newFocus, delay):
+    # Adjust focus using v4l2-ctl, assuming focus control is available
+    os.system(f"v4l2-ctl -c focus_absolute={newFocus}")   
+
+    # Allow time for adjustment
+    time.sleep(delay)
 
 def calculateSharpnessSobel(frame, centerSize):
     startTime = time.time()
@@ -139,13 +168,6 @@ def calculateSharpnessRoberts(frame, centerSize):
     sharpness = stddev[0][0] ** 2  # Variance as a measure of sharpness
     endTime = time.time()
     return sharpness, (endTime - startTime)
-
-def adjustCameraFocus(newFocus):
-    # Adjust focus using v4l2-ctl, assuming focus control is available
-    os.system(f"v4l2-ctl -c focus_absolute={newFocus}")   
-
-    # Allow time for adjustment
-    # time.sleep(0.01)
 
 def resizeFrame(frame, frameSize):
     # Calculate the size of the center that is used to apply the filter to
