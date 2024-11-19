@@ -1,17 +1,12 @@
 import numpy as np
-from PIL import Image, ImageOps
 import time
 import cv2
 
 def laplacianSharpness(frame, centerSize):
     startTime = time.time()
 
-    # Crop and resize the frame (assumes frame is a NumPy array)
     croppedFrame = resizeFrame(frame, centerSize)
 
-    # Convert to grayscale using Pillow
-    # image = Image.fromarray(croppedFrame)
-    # gray_image = ImageOps.grayscale(image)
     gray = cv2.cvtColor(croppedFrame, cv2.COLOR_BGR2GRAY)
 
     # Laplacian kernel
@@ -25,14 +20,12 @@ def laplacianSharpness(frame, centerSize):
     # Create an output array for the Laplacian result
     laplace = np.zeros_like(gray, dtype=np.float64)
 
-    # Apply kernel manually
     for i in range(1, height - 1):
         for j in range(1, width - 1):
-            # Apply kernel to the neighborhood
             region = gray[i-1:i+2, j-1:j+2]
             laplace[i, j] = np.sum(region * kernel)
 
-    # Use absolute values to calculate sharpness
+    # Calculate sharpness value
     laplace = np.abs(laplace)
 
     # Calculate the standard deviation (sharpness measure)
