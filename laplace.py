@@ -63,18 +63,3 @@ def resizeFrame(frame, frameSize):
 
     # Crop the image to the 100x100 region
     return frame[startY:endY, startX:endX]
-
-def manualLaplace(image_path, centerSize):
-    # Load image using Pillow
-    image = Image.open(image_path)
-    image_np = np.array(image) # Convert to NumPy array
-
-    # Calculate Sharpness
-    sharpness, elapsed_time = laplacianSharpness(image_np, centerSize)
-
-    # Print results
-    print(f"SharpnessL {sharpness}")
-    return sharpness
-
-#manualLaplace("blurry.jpg", (100, 100))
-#manualLaplace("clear.jpg", (100, 100))
