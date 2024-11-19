@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image, ImageOps
 import time
+import cv2
 
 def laplacianSharpness(frame, centerSize):
     startTime = time.time()
@@ -9,9 +10,9 @@ def laplacianSharpness(frame, centerSize):
     croppedFrame = resizeFrame(frame, centerSize)
 
     # Convert to grayscale using Pillow
-    image = Image.fromarray(croppedFrame)
-    gray_image = ImageOps.grayscale(image)
-    gray = np.array(gray_image)
+    # image = Image.fromarray(croppedFrame)
+    # gray_image = ImageOps.grayscale(image)
+    gray = cv2.cvtColor(croppedFrame, cv2.COLOR_BGR2GRAY)
 
     # Laplacian kernel
     kernel = np.array([[0,  1,  0], 
@@ -42,22 +43,26 @@ def laplacianSharpness(frame, centerSize):
     return sharpness, (endTime - startTime)
 
 
-def resizeFrame(frame, size):
+def resizeFrame(frame, frameSize):
+    # Calculate the size of the center that is used to apply the filter to
+    # if imageSize = 100 then an area of 100x100 pixels is used to apply the filter.
+    frameSize = frameSize // 2
+    # Get the dimensions of the image
     height, width = frame.shape[:2]
-    crop_height, crop_width = size
 
-    # Calculate the center of the frame
-    center_x, center_y = width // 2, height // 2
+    # Calculate the coordinates for the center of the image
+    centerX, centerY = width // 2, height // 2
 
-    # Determine the cropping box
-    x1 = max(center_x - crop_width // 2, 0)
-    y1 = max(center_y - crop_height // 2, 0)
-    x2 = min(center_x + crop_width // 2, width)
-    y2 = min(center_y + crop_height // 2, height)
+    # Define the top-left corner of the 100x100 region
+    startX = max(centerX - frameSize, 0)
+    startY = max(centerY - frameSize, 0)
 
-    # Crop the frame
-    cropped_frame = frame[y1:y2, x1:x2]
-    return cropped_frame
+    # Define the bottom-right corner of the 100x100 region
+    endX = min(centerX + frameSize, width)
+    endY = min(centerY + frameSize, height)
+
+    # Crop the image to the 100x100 region
+    return frame[startY:endY, startX:endX]
 
 def manualLaplace(image_path, centerSize):
     # Load image using Pillow

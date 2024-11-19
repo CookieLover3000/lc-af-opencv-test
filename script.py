@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import time
 import os
+from laplace import laplacianSharpness
 
 def capture_video_stream():
     # Open the camera, index = 0 for default webcam.
@@ -35,15 +36,16 @@ def capture_video_stream():
         # Display the frame
         cv2.imshow("Video Stream", frame)
         # sobel, sobelDuration = calculateSharpnessSobel(frame, 300)
-        roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
+        # roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
         # laplace, laplaceDuration = calculateSharpnessLaplace(frame, 300)
+        laplace, laplaceDuration = laplacianSharpness(frame, 300)
 
         # print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
         # print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
         # print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
         # print(f'focus value: \t{newFocus}\n')
         if not sweepDone:
-            sweepDone, sweep = sweepAlgorithm(sweep, tdict, roberts)
+            sweepDone, sweep = sweepAlgorithm(sweep, tdict, laplace)
 
         # Wait 1 ms for a scherptepress, stop if the user presses 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -169,4 +171,4 @@ def resizeFrame(frame, frameSize):
     return frame[startY:endY, startX:endX]
 
 
-#capture_video_stream()
+capture_video_stream()

@@ -15,4 +15,4 @@ def testJpeg(image_path, centersize):
 
     print(f"OpenCV: {cvLaplace}     Custom: {laplace}")
 
-testJpeg("clear.jpg", 100)
+# testJpeg("clear.jpg", 100)
