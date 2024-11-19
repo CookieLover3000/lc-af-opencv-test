@@ -1,6 +1,5 @@
 import numpy as np
 from PIL import Image, ImageOps
-from scipy.ndimage import convolve
 import time
 
 def laplacianSharpness(frame, centerSize):
@@ -14,9 +13,26 @@ def laplacianSharpness(frame, centerSize):
     gray_image = ImageOps.grayscale(image)
     gray = np.array(gray_image)
 
-    # Apply a simple Laplacian kernel using NumPy
-    kernel = np.array([[0, 1, 0], [1, -4, 1], [0, 1, 0]])
-    laplace = np.abs(convolve(gray, kernel, mode='constant', cval=0.0))
+    # Laplacian kernel
+    kernel = np.array([[0,  1,  0], 
+                       [1, -4,  1], 
+                       [0,  1,  0]])
+
+    # Get image dimensions
+    height, width = gray.shape
+
+    # Create an output array for the Laplacian result
+    laplace = np.zeros_like(gray, dtype=np.float64)
+
+    # Apply kernel manually
+    for i in range(1, height - 1):
+        for j in range(1, width - 1):
+            # Apply kernel to the neighborhood
+            region = gray[i-1:i+2, j-1:j+2]
+            laplace[i, j] = np.sum(region * kernel)
+
+    # Use absolute values to calculate sharpness
+    laplace = np.abs(laplace)
 
     # Calculate the standard deviation (sharpness measure)
     stddev = np.std(laplace)
