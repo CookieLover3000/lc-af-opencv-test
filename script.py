@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import time
 import os
-from laplace import laplacianSharpness
+#from laplace import laplacianSharpness
 
 def capture_video_stream():
     # Open the camera, index = 0 for default webcam.
@@ -18,7 +18,7 @@ def capture_video_stream():
     if not cap.isOpened():
         print("Cannot open Camera")
         return
-    
+
     # Temperare focus value and sweep counter
     sweep = 0
     tdict = {}
@@ -35,17 +35,21 @@ def capture_video_stream():
 
         # Display the frame
         cv2.imshow("Video Stream", frame)
-        # sobel, sobelDuration = calculateSharpnessSobel(frame, 300)
-        # roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
-        # laplace, laplaceDuration = calculateSharpnessLaplace(frame, 300)
-        laplace, laplaceDuration = laplacianSharpness(frame, 300)
+        #sobel, sobelDuration = calculateSharpnessSobel(frame, 300)
+        #roberts, robertsDuration = calculateSharpnessRoberts(frame, 300)
+        #laplace, laplaceDuration = calculateSharpnessLaplace(frame, 300)
+        #laplace, laplaceDuration = laplacianSharpness(frame, 300)
+        fft, fftDuraction = calculateSharpnessfft(frame, 300)
 
-        # print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
-        # print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
-        # print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
-        # print(f'focus value: \t{newFocus}\n')
-        if not sweepDone:
-            sweepDone, sweep = sweepAlgorithm(sweep, tdict, laplace)
+        
+
+        #print(f'Sobel: \t\t{sobel}\t{sobelDuration}')
+        #print(f'Robert Cross: \t{roberts}\t{robertsDuration}')
+        #print(f'laplace: \t{laplace}\t{laplaceDuration}\n')
+        print(f'Fast fourier: \t{fft}\t{fftDuraction}\n')
+         # print(f'focus value: \t{newFocus}\n')
+        #if not sweepDone:
+        #    sweepDone, sweep = sweepAlgorithm(sweep, tdict, laplace)
 
         # Wait 1 ms for a scherptepress, stop if the user presses 'q'
         if cv2.waitKey(1) & 0xFF == ord('q'):
@@ -139,6 +143,40 @@ def calculateSharpnessRoberts(frame, centerSize):
     # Compute the standard deviation of the gradient magnitude (measure of sharpness)
     mean, stddev = cv2.meanStdDev(gradMagnitude)
     sharpness = stddev[0][0] ** 2  # Variance as a measure of sharpness
+    endTime = time.time()
+    return sharpness, (endTime - startTime)
+
+def calculateSharpnessfft(frame, centerSize):
+    startTime=time.time()
+
+    # Crop the image to the 100x100 region
+    croppedFrame = resizeFrame(frame, centerSize)
+
+    # Convert the cropped image to grayscale
+    gray = cv2.cvtColor(croppedFrame, cv2.COLOR_BGR2GRAY)
+
+    # Transforms frame to the domain spectrum using fft
+    frequency_image = np.fft.fft2(gray)
+    
+    # Place the 0frequency component in the middle of the frame
+    frequency_image_shifted = np.fft.fftshift(frequency_image)
+
+    # Calculate the magnitude spectrum, high frequencies make for sharper edges
+    magnitude_spectrum = np.abs(frequency_image_shifted)
+
+    # Highpass filter
+    rows, cols = gray.shape
+    crow, ccol = rows // 2 , cols // 2
+    radius = 30  # example radius to define high frequencies
+    mask = np.ones((rows, cols), np.uint8)
+    cv2.circle(mask, (ccol, crow), radius, 0, -1)
+
+    # Based on the high frequencies calculate the sharpness value
+    high_freq_content = magnitude_spectrum * mask
+    sharpness = np.sum(high_freq_content)
+
+    # Return sharpness value and time it took to calculate this
+
     endTime = time.time()
     return sharpness, (endTime - startTime)
 
